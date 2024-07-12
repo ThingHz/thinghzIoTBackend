@@ -7,7 +7,7 @@
 
 - **High Throughput**: My IoT infrastructure should have high throughput. It should be able to process a large number of reads and writes at a time without a long delay. 
 
-![thinghz_backend](https://github.com/ThingHz/thinghzIoTBackend/blob/master/aws_Serverless_iot.png)
+![thinghz_backend](https://github.com/vbshightime/thinghzIoTBackend/blob/main/aws_Serverless_iot.webp)
 
 # Features
 - **Secure commisioning of devices**:  
