@@ -1,0 +1,13 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "title": "publish Validation",
+    "required": ["light_state"],
+    "properties": {
+      "userName": {
+        "type": "integer",
+        "title": "light state schema"
+      }
+    }
+  }

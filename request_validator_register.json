@@ -1,0 +1,28 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "title": "register Validation",
+    "required": ["userName","phone","email_id","password"],
+    "properties": {
+      "userName": {
+        "type": "string",
+        "title": "userName schema",
+        "pattern": "^[a-zA-Z0-9]+$"
+      },
+      "phone":{
+          "type": "string",
+          "title": "phone schema",
+          "pattern":"^[0-9]+$"
+      },
+      "email_id":{
+        "type": "string",
+        "title": "emailid schema",
+        "pattern": "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*$"
+      },
+      "password":{
+          "type": "string",
+          "title": "password schema"
+      }
+    }
+  }

@@ -1,0 +1,89 @@
+syntax = "proto2";
+
+message sensorT {
+  required uint32 sensorProfile = 1;
+  optional uint32 hwRev = 2;
+  optional uint32 fwRev = 3;
+  optional uint32 deviceType = 4;
+  optional uint32 batteryPercentage = 5;
+  required float temp = 6;
+}
+
+message sensorTH {
+  required uint32 sensorProfile = 1;
+  optional uint32 hwRev = 2;
+  optional uint32 fwRev = 3;
+  optional uint32 deviceType = 4;
+  optional uint32 batteryPercentage = 5;
+  required float temp = 6;
+  required float humidity = 7;
+}
+
+message sensorTHM {
+  required uint32 sensorProfile = 1;
+  optional uint32 hwRev = 2;
+  optional uint32 fwRev = 3;
+  optional uint32 deviceType = 4;
+  optional uint32 batteryPercentage = 5;
+  required float temp = 6;
+  required float humidity = 7;
+  required float moisture = 8;
+}
+
+message sensorBMP {
+  required uint32 sensorProfile = 1;
+  optional uint32 hwRev = 2;
+  optional uint32 fwRev = 3;
+  optional uint32 deviceType = 4;
+  optional uint32 batteryPercentage = 5;
+  required float bmp_temp = 6;
+  required float bmp_pressure = 7;
+  required float bmp_sea = 8;
+  required float bmp_altitude = 9;
+}
+
+message sensorBMPTH {
+  required uint32 sensorProfile = 1;
+  optional uint32 hwRev = 2;
+  optional uint32 fwRev = 3;
+  optional uint32 deviceType = 4;
+  optional uint32 batteryPercentage = 5;
+  required float bmp_temp = 6;
+  required float bmp_pressure = 7;
+  required float bmp_sea = 8;
+  required float bmp_altitude = 9;
+  required float bmp_humid = 10;
+}
+
+
+message sensorGas {
+  required uint32 sensorProfile = 1;
+  optional uint32 hwRev = 2;
+  optional uint32 fwRev = 3;
+  optional uint32 deviceType = 4;
+  optional uint32 batteryPercentage = 5;
+  required uint32 gas= 6;
+}
+
+message sensorGyroAccel {
+  required uint32 sensorProfile = 1;
+  optional uint32 hwRev = 2;
+  optional uint32 fwRev = 3;
+  optional uint32 deviceType = 4;
+  optional uint32 batteryPercentage = 5;
+  required int32 gyro = 6;
+  required int32 accel = 7;
+}
+
+
+message sensorTHC {
+  required uint32 sensorProfile = 1;
+  optional uint32 hwRev = 2;
+  optional uint32 fwRev = 3;
+  optional uint32 deviceType = 4;
+  optional uint32 batteryPercentage = 5;
+  required float temp = 6;
+  required float humidity = 7;
+  required float capacitance = 8;
+}
+

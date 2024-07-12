@@ -1,0 +1,18 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "title": "login Validation",
+    "required": ["userName","password"],
+    "properties": {
+      "userName": {
+        "type": "string",
+        "title": "userName schema",
+        "pattern": "^[a-zA-Z0-9]+$"
+      },
+      "password":{
+          "type": "string",
+          "title": "password schema"
+      }
+    }
+  }

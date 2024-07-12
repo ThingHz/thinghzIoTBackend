@@ -1,0 +1,28 @@
+version: 0.2    
+
+phases:
+  install:
+    commands:
+      - echo installing serverless...
+      - npm install -g serverless
+  pre_build:
+    commands:
+      - echo intstall NPM dependencies
+      - npm install
+      - echo install serverless offline
+      - npm install --save -dev serverless-offline
+      - npm install serverless-domain-manager --save-dev
+      - echo install serverless-domain-manager
+      - npm install serverless-pseudo-parameters --save
+      
+      
+  
+  build:
+    commands:
+      - echo Deployment started on `date`
+      - echo Deplying with sls framework
+      - serverless deploy --stage prod
+  
+  post_build:
+    commands:
+      - echo deployment completed on `date`

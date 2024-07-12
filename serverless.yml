@@ -1,0 +1,788 @@
+service: thinghz-backend
+
+plugins:
+  - serverless-offline  
+#  - serverless-step-functions
+#  - serverless-prune-plugin
+  - serverless-pseudo-parameters
+  - serverless-domain-manager
+  - serverless-step-functions-offline
+
+custom:
+  secrets: ${file(jwt_secret.json)}
+  stage: ${opt:stage, self:provider.stage}
+  stepFunctionsOffline:
+    updateStatus: updateStatus
+    deviceStatusEmail: deviceStatusEmail
+    deviceEscalationEmail: deviceEscalationEmail
+  allowedHeaders:
+    - Accept
+    - Content-Type
+    - Content-Length
+    - Authorization
+    - X-Amz-Date
+    - X-Api-Key
+    - X-Amz-Security-Token
+    - X-Amz-User-Agent
+    - app_user_id
+    - app_user_name
+  domains:
+    prod: api.thinghz.com
+    dev: dev-api.thinghz.com  
+  customDomain:
+    domainName: ${self:custom.domains.${self:custom.stage}}
+    basePath: 'v1'
+    stage: ${self:custom.stage}
+    certificateName: thinghz.com
+    createRoute53Record: true
+  
+  
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: prod
+  region: us-east-1
+  memorySize: 128
+  timeout: 10
+  endpointType: regional
+  environment:
+    BUILD_NUMBER: 3
+    DATA_TABLE: ${self:service}-${self:provider.name}-Data-${self:provider.environment.BUILD_NUMBER}
+    DEVICE_TABLE: ${self:service}-${self:provider.name}-Devices-${self:provider.environment.BUILD_NUMBER}
+    USER_TABLE: ${self:service}-${self:provider.name}-Users-${self:provider.environment.BUILD_NUMBER}
+    ESCALATION_TABLE : ${self:service}-${self:provider.name}-Escalations-${self:provider.environment.BUILD_NUMBER}
+    CHILD_USER_TABLE :  ${self:service}-${self:provider.name}-ChildUser-${self:provider.environment.BUILD_NUMBER}
+    DEVICE_META_DATA_TABLE : ${self:service}-${self:provider.name}-DeviceMetaData-${self:provider.environment.BUILD_NUMBER}
+    EMAIL_ID : contact@thinghz.com
+    IOT_POLICY : thing_test-Policy 
+    JWT_SECRET: ${self:custom.secrets.jwtSecret}
+
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.DEVICE_TABLE}"
+      
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.DEVICE_TABLE}/index/*"
+    
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.DATA_TABLE}"
+
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.USER_TABLE}"
+    
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.USER_TABLE}/index/*"
+    
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.ESCALATION_TABLE}"
+    
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.ESCALATION_TABLE}/index/*"
+
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.CHILD_USER_TABLE}"
+
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.CHILD_USER_TABLE}/index/*"
+
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.DEVICE_META_DATA_TABLE}"
+
+    
+    #- Effect: Allow
+    #  Action:
+    #   - "states:ListStateMachines"
+    #   - "states:StartExecution"
+    #  Resource: "arn:aws:states:${opt:region, self:provider.region}:#{AWS::AccountId}:stateMachine:dataStateMachine"
+    - Effect: Allow
+      Resource: "*"
+      Action:
+       - "sns:*"
+       
+    - Effect: Allow
+      Action: 
+        - ses:*
+      Resource: '*'
+
+functions:
+  postData:
+    handler: api/postData.handler
+    description: POST /data
+    events:
+      - http:
+          path: data
+          method: post
+          request: 
+            schema:
+              application/json: ${file(request_validator_data.json)}
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+      
+  updateUser:
+    handler: api/updateUser.handler
+    description: POST /users
+    events:
+      - http:
+          path: users
+          method: post
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+    
+
+  addDevice:
+    handler: api/addDevice.handler
+    description: POST /device
+    events:
+      - http:
+          path: device
+          method: post
+          request:
+            schema:
+              application/json: ${file(request_validator_device.json)}
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  provisionDevice:
+    handler: api/iot/provisionDevice.handler
+    description: POST /provision
+    timeout: 30
+    events:
+      - http:
+          path: provision
+          method: post
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  addDeviceToGroup:
+    handler: api/iot/addDeviceToGroup.handler
+    description: POST /addGroup
+    timeout: 30
+    events:
+      - http:
+          path: add-group
+          method: post
+          request:
+            schema:
+              application/json: ${file(request_validator_device.json)}
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+
+  login:
+    handler: api/auth/login.handler
+    description: POST/login          
+    events:
+      - http:
+          path: login
+          method: post
+          request:
+            schema:
+              application/json: ${file(request_validator_login.json)}
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+            
+  register:
+    handler: api/auth/register.handler
+    description: POST/register          
+    events:
+      - http:
+          path: register
+          method: post
+          request:
+            schema:
+              application/json: ${file(request_validator_register.json)}
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}         
+  
+  parseIotData:
+    handler: api/iot/parseIotData.handler
+    description: iot Event
+    events:
+      - iot:
+          sql: "select * from 'aws/thing/thinghz/'"
+  
+  publishIotData:
+    handler: api/iot/publishIoTData.handler
+    description: POST/publish          
+    events:
+      - http:
+          path: publish
+          method: post
+          request:
+            schema:
+              application/json: ${file(request_validator_publish.json)}
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders} 
+
+  getDevice:
+    handler: api/get/getDevice.handler
+    description: GET /device/{device_id}
+    events:
+      - http:
+          path: device/{device_id}
+          method: get
+          request:
+            parameters:
+              paths:
+                device_id: true   
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  createCertificate:
+    handler: api/iot/createCertificate.handler
+    description: GET /certificate
+    timeout: 30
+    events:
+      - http:
+          path: certificate
+          method: get
+          request:
+            parameters:
+              querystrings:
+                device_id: true
+                group_id: true
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  deleteDevice:
+    handler: api/delete/deleteDevice.handler
+    description: DELETE /device/{device_id}
+    events:
+      - http:
+          path: device/{device_id}
+          method: delete
+          request:
+            parameters:
+              paths:
+                device_id: true  
+              querystrings:
+                escalation: true 
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}          
+
+  getDeviceData:
+    handler: api/get/getDeviceData.handler
+    description: GET /data/n/{device_id}
+    events:
+      - http:
+          path: data/n/{device_id}
+          method: get
+          request:
+            parameters:
+              querystrings:
+                limit: false
+                start: false
+              paths:
+                device_id: true
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  getDeviceDataLast:
+    handler: api/get/getDeviceDataLast.handler
+    description: GET /data/last/{device_id}
+    events:
+      - http:
+          path: data/last/{device_id}
+          method: get
+          request:
+            parameters:
+              paths:
+                device_id: true
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+           
+  getDevices:
+    handler: api/get/getDevices.handler
+    description: GET /devices/
+    events:
+      - http:
+          path: devices
+          method: get
+          request:
+            parameters:
+              querystrings:
+                status: false
+                escalation: false
+                profile: false
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}          
+  
+  getEscalatedDevices:
+    handler: api/get/getEscalatedDevices.handler
+    description: GET /escalations/
+    events:
+      - http:
+          path: escalations
+          method: get
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+            
+
+  getEscalatedDevice:
+    handler: api/get/getEscalatedDevice.handler
+    description: GET /escalation/{device_id}
+    events:
+      - http:
+          path: escalation-device/{device_id}
+          method: get
+          request:
+            parameters:
+              paths:
+                device_id: true
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}          
+            
+  getEscalatedDevicesByLevel:
+    handler: api/get/getEscalatedDevicesByLevel.handler
+    description: GET /Escalation/{level}
+    events:
+      - http:
+          path: escalation/{level}
+          method: get
+          request:
+            parameters:
+              paths:
+                level: true
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  getDeviceStatus:
+    handler: api/get/getDeviceStatus.handler
+    description: GET /status/{device_status}
+    events:
+      - http:
+          path: status/{device_status}
+          method: get
+          request:
+            parameters:
+              paths:
+                device_status: true
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}   
+
+
+  deviceStatusEmail:
+    handler: api/schedule/deviceStatusEmail.handler
+    description: device Status Email every 180 mins
+    timeout: 20
+    events:
+      - schedule:
+          rate: rate(120 minutes)
+    
+  deviceEscalationEmail:
+    handler: api/schedule/deviceEscalationEmail.handler
+    description: device EscalationEmail every 120 mins
+    timeout: 20
+    events:
+      - schedule:
+          rate: rate(120 minutes)
+  
+  getChildUsers:
+    handler: api/get/getChildUsers.handler
+    description: GET /Users
+    events:
+      - http:
+          path: users
+          method: get
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders} 
+  
+  updateDevice:
+    handler: api/updateDevice.handler
+    description: 
+    events:
+      - http:
+          path: device/{device_id}
+          method: put
+          request:
+            parameters:
+              paths:
+                device_id: true
+              querystrings:
+                escalation: true
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  updateDeviceMetaData:
+    handler: api/updateDeviceMetaData.handler
+    description: 
+    events:
+      - http:
+          path: device-meta/{device_id}
+          method: put
+          request:
+            parameters:
+              paths:
+                device_id: true 
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  getMetaData:
+    handler: api/get/getMetaData.handler
+    description: 
+    events:
+      - http:
+          path: device-meta/{device_id}
+          method: get
+          request:
+            parameters:
+              paths:
+                device_id: true 
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  updateDeviceRange:
+    handler: api/updateDeviceRange.handler
+    description: 
+    events:
+      - http:
+          path: device-range/{device_id}
+          method: put
+          request:
+            parameters:
+              paths:
+                device_id: true
+              querystrings:
+                sensor_profile: true 
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  updateEscalation:
+    handler: asyncUtils/updateEscalation.handler
+    description: updates the device escalation 
+    timeout: 20
+    events:
+      - schedule:
+          rate: rate(90 minutes)
+
+  updateStatus:
+    handler: asyncUtils/updateStatus.handler
+    description: updates the device status to the device table
+    timeout: 20
+    events:
+      - schedule:
+          rate: rate(120 minutes)
+
+
+        
+resources:
+  Resources:
+    DeviceTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.DATA_TABLE}
+        AttributeDefinitions:  
+          - AttributeName: device_id
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+          - AttributeName: sensor_profile
+            AttributeType: N  
+        KeySchema:
+          - AttributeName: device_id
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        LocalSecondaryIndexes:
+          - IndexName: myLSI
+            KeySchema:
+              - AttributeName: device_id
+                KeyType: HASH
+              - AttributeName: sensor_profile
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        
+    UserTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.USER_TABLE}
+        AttributeDefinitions:  
+          - AttributeName: userName
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+          - AttributeName: expires
+            AttributeType: N
+          - AttributeName: email_id
+            AttributeType: S  
+        KeySchema:
+          - AttributeName: userName
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        LocalSecondaryIndexes:
+          - IndexName: lsi_user
+            KeySchema:
+              - AttributeName: userName
+                KeyType: HASH
+              - AttributeName: expires
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        GlobalSecondaryIndexes: 
+          - IndexName: email_id-index
+            KeySchema:
+              - AttributeName: email_id
+                KeyType: HASH
+              - AttributeName: timestamp
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1   
+              
+           
+    AddDevice:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.DEVICE_TABLE}
+        AttributeDefinitions:  
+          - AttributeName: userName
+            AttributeType: S
+          - AttributeName: device_id
+            AttributeType: S
+          - AttributeName: sensor_profile
+            AttributeType: N
+          - AttributeName: device_status
+            AttributeType: S       
+        KeySchema:
+          - AttributeName: userName
+            KeyType: HASH
+          - AttributeName: device_id
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+        LocalSecondaryIndexes:
+          - IndexName: lsi_device
+            KeySchema:
+              - AttributeName: userName
+                KeyType: HASH
+              - AttributeName:  device_status
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL   
+        
+        GlobalSecondaryIndexes: 
+          - IndexName: device_id-index
+            KeySchema:
+              - AttributeName: device_id
+                KeyType: HASH
+              - AttributeName: sensor_profile
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1 
+          
+    Escalation:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.ESCALATION_TABLE}
+        AttributeDefinitions:  
+          - AttributeName: userName
+            AttributeType: S
+          - AttributeName: device_id
+            AttributeType: S
+          - AttributeName: escalation
+            AttributeType: N    
+          
+        KeySchema:
+          - AttributeName: device_id
+            KeyType: HASH
+          - AttributeName: escalation
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        
+        LocalSecondaryIndexes:
+          - IndexName: lsi_device_user
+            KeySchema:
+              - AttributeName: device_id
+                KeyType: HASH
+              - AttributeName:  userName
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL    
+
+        GlobalSecondaryIndexes:
+          - IndexName: gsi_user
+            KeySchema:
+              - AttributeName: userName
+                KeyType: HASH
+              - AttributeName:  escalation
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1      
+
+    ChildUser:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.CHILD_USER_TABLE}
+        AttributeDefinitions:  
+          - AttributeName: userName
+            AttributeType: S
+          - AttributeName: isAdmin
+            AttributeType: N
+          - AttributeName: parent
+            AttributeType: S    
+          
+        KeySchema:
+          - AttributeName: userName
+            KeyType: HASH
+          - AttributeName: isAdmin
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        
+        GlobalSecondaryIndexes:
+          - IndexName: gsi_parent
+            KeySchema:
+              - AttributeName: parent
+                KeyType: HASH
+              - AttributeName:  isAdmin
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1       
+                 
+    DeviceMetaData:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.DEVICE_META_DATA_TABLE}
+        AttributeDefinitions:  
+          - AttributeName: userName
+            AttributeType: S
+          - AttributeName: device_id
+            AttributeType: S   
+          
+        KeySchema:
+          - AttributeName: device_id
+            KeyType: HASH
+          - AttributeName: userName
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        
+           
+   
+                              
+

@@ -1,0 +1,18 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "title": "Device Data Validation",
+    "required": ["device_id","sensor_profile"],
+    "properties": {
+      "device_id": {
+        "type": "string",
+        "title": "deviceId schema",
+        "pattern": "^[a-zA-Z0-9]+$"
+      },
+      "sensor_profile":{
+          "type": "integer",
+          "title": "sensorProfile schema"
+      }
+    }
+  }
